@@ -1,0 +1,40 @@
+# Fix print output for fix extra
+10.9173049375 -13843.120313759
+# Fix print output for fix extra
+10.976 -13843.1203137623
+# Fix print output for fix extra
+11.0349050625 -13843.1203137609
+# Fix print output for fix extra
+11.0940205 -13843.1203137599
+# Fix print output for fix extra
+11.1533466875 -13843.1203137591
+# Fix print output for fix extra
+11.212884 -13843.120313772
+# Fix print output for fix extra
+11.2726328125 -13843.1203137717
+# Fix print output for fix extra
+11.3325935 -13843.1203137715
+# Fix print output for fix extra
+11.3927664375 -13843.1203137714
+# Fix print output for fix extra
+11.453152 -13843.1203137716
+# Fix print output for fix extra
+11.5137505625 -13843.1203137717
+# Fix print output for fix extra
+11.5745625 -13843.1203137717
+# Fix print output for fix extra
+11.6355881875 -13843.1203137717
+# Fix print output for fix extra
+11.696828 -13843.1203137717
+# Fix print output for fix extra
+11.7582823125 -13843.1203137717
+# Fix print output for fix extra
+11.8199515 -13843.120313766
+# Fix print output for fix extra
+11.8818359375 -13843.1203137613
+# Fix print output for fix extra
+11.943936 -13843.120313771
+# Fix print output for fix extra
+12.0062520625 -13843.1203137681
+# Fix print output for fix extra
+12.0687845 -13843.1203137657

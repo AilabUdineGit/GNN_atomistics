@@ -1,0 +1,76 @@
+LAMMPS (29 Oct 2020)
+Lattice spacing in x,y,z = 2.8438772 2.8438772 2.8438772
+Created orthogonal box = (0.0000000 0.0000000 0.0000000) to (8.5316315 8.5316315 8.5316315)
+  1 by 1 by 2 MPI processor grid
+Created 54 atoms
+  create_atoms CPU = 0.000 seconds
+PairGNN
+SETTINGS
+PairGNN
+SETTINGS
+realcut: 3.500000COEFF
+ALLOCATE
+WARNING: No fixes defined, atoms won't move (../verlet.cpp:54)
+INIT STYLE
+INIT ONE
+realcut: 3.500000COEFF
+ALLOCATE
+INIT STYLE
+INIT ONE
+Neighbor list info ...
+  update every 1 steps, delay 10 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 5.5
+  ghost atom cutoff = 5.5
+  binsize = 2.75, bins = 4 4 4
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair gnn, perpetual
+      attributes: full, newton on, ghost, cut 3.5
+      pair build: full/bin/ghost
+      stencil: full/ghost/bin/3d
+      bin: standard
+Setting up Verlet run ...
+  Unit style    : metal
+  Current step  : 0
+  Time step     : 0.001
+All atoms
+Compute_from_lammps
+All atoms
+Compute_from_lammps
+All atoms
+Per MPI rank memory allocation (min/avg/max) = 4.198 | 4.198 | 4.198 Mbytes
+Step Temp E_pair E_mol TotEng Press 
+       0            0   -186869.82            0   -186869.82   -69641.694 
+All atoms
+Compute_from_lammps
+Compute_from_lammps
+       1            0   -186869.82            0   -186869.82   -69641.694 
+Loop time of 4.20743 on 2 procs for 1 steps with 54 atoms
+
+Performance: 0.021 ns/day, 1168.729 hours/ns, 0.238 timesteps/s
+85.7% CPU use with 2 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 4.2001     | 4.2037     | 4.2073     |   0.2 | 99.91
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.7732e-05 | 0.003596   | 0.0071642  |   6.0 |  0.09
+Output  | 9.0111e-05 | 9.6573e-05 | 0.00010303 |   0.0 |  0.00
+Modify  | 6.01e-07   | 6.515e-07  | 7.02e-07   |   0.0 |  0.00
+Other   |            | 1.477e-05  |            |       |  0.00
+
+Nlocal:        27.0000 ave          27 max          27 min
+Histogram: 2 0 0 0 0 0 0 0 0 0
+Nghost:        398.000 ave         398 max         398 min
+Histogram: 2 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 2 0 0 0 0 0 0 0 0 0
+FullNghs:      378.000 ave         378 max         378 min
+Histogram: 2 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 756
+Ave neighs/atom = 14.000000
+Neighbor list builds = 0
+Dangerous builds = 0
+Total wall time: 0:00:30

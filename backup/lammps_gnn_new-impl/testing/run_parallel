@@ -1,0 +1,1 @@
+mpiexec -np 2 ../lammps-29Oct20/src/lmp_mpi -in in

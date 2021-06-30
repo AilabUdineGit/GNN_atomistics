@@ -1,0 +1,81 @@
+LAMMPS (29 Oct 2020)
+Lattice spacing in x,y,z = 2.8438772 2.8438772 2.8438772
+Created orthogonal box = (0.0000000 0.0000000 0.0000000) to (8.5316315 8.5316315 8.5316315)
+  1 by 1 by 1 MPI processor grid
+Created 54 atoms
+  create_atoms CPU = 0.000 seconds
+SETTINGS
+realcut: 5.500000COEFF
+ALLOCATE
+WARNING: No fixes defined, atoms won't move (../verlet.cpp:54)
+INIT STYLE
+INIT ONE
+Neighbor list info ...
+  update every 1 steps, delay 10 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 7.5
+  ghost atom cutoff = 7.5
+  binsize = 3.75, bins = 3 3 3
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair gnn, perpetual
+      attributes: full, newton on, ghost, cut 5.5
+      pair build: full/bin/ghost
+      stencil: full/ghost/bin/3d
+      bin: standard
+Setting up Verlet run ...
+  Unit style    : metal
+  Current step  : 0
+  Time step     : 0.001
+All atoms
+Per MPI rank memory allocation (min/avg/max) = 4.623 | 4.623 | 4.623 Mbytes
+Step Temp E_pair E_mol TotEng Press 
+       0            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+       1            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+       2            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+       3            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+       4            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+       5            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+       6            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+       7            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+       8            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+       9            0   -186887.42            0   -186887.42   -12349.969 
+All atoms
+      10            0   -186887.42            0   -186887.42   -12349.969 
+Loop time of 74.0335 on 1 procs for 10 steps with 54 atoms
+
+Performance: 0.012 ns/day, 2056.486 hours/ns, 0.135 timesteps/s
+510.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 74.021     | 74.021     | 74.021     |   0.0 | 99.98
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 9.3937e-05 | 9.3937e-05 | 9.3937e-05 |   0.0 |  0.00
+Output  | 0.012328   | 0.012328   | 0.012328   |   0.0 |  0.02
+Modify  | 9.5367e-06 | 9.5367e-06 | 9.5367e-06 |   0.0 |  0.00
+Other   |            | 3.934e-05  |            |       |  0.00
+
+Nlocal:        54.0000 ave          54 max          54 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        1187.00 ave        1187 max        1187 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+FullNghs:      3132.00 ave        3132 max        3132 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 3132
+Ave neighs/atom = 58.000000
+Neighbor list builds = 0
+Dangerous builds = 0
+Total wall time: 0:01:40

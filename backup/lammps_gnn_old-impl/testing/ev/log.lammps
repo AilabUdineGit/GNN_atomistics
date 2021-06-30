@@ -1,0 +1,2923 @@
+LAMMPS (29 Oct 2020)
+label           loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*1
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.795 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.7950000 2.7950000 2.7950000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.5900000 5.5900000 1.3975000) with tilt (0.0000000 1.3975000 1.3975000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 6.9875, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.614         5.59         5.59       1.3975    137129.87    137129.87            0            0            0            0    91419.915 
+     100    -13843.12         5.59         5.59       1.3975    11.146329    11.146329            0            0            0            0    7.4308858 
+     104    -13843.12         5.59         5.59       1.3975    10.516184    10.516184            0            0            0            0    7.0107893 
+Loop time of 4.96328 on 1 procs for 104 steps with 4 atoms
+
+635.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.6143437955  -13843.1203137451   -13843.120313759
+  Force two-norm initial, final = 1.8911690 0.00011639124
+  Force max component initial, final = 0.6686292 4.1150519e-05
+  Final line search alpha, max atom move = 1.0000000 4.1150519e-05
+  Iterations, force evaluations = 104 104
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 4.9425     | 4.9425     | 4.9425     |   0.0 | 99.58
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00026727 | 0.00026727 | 0.00026727 |   0.0 |  0.01
+Output  | 0.0196     | 0.0196     | 0.0196     |   0.0 |  0.39
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.0008719  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.120313759
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.795*${latparam}*${latparam}/2)
+variable        V equal (2.795*2.795*${latparam}/2)
+variable        V equal (2.795*2.795*2.795/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+10.9173049375 -13843.120313759
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     104   -13840.009         5.59         5.59       1.3975    392832.23    392832.23            0 -6.5172614e-11            0            0    261888.15 
+     105   -13840.009         5.59         5.59       1.3975    392832.23    392832.23            0 -6.5172614e-11            0            0    261888.15 
+Loop time of 0.0502679 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.719 ns/day, 13.963 hours/ns, 19.893 timesteps/s
+655.8% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.050117   | 0.050117   | 0.050117   |   0.0 | 99.70
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.3842e-06 | 2.3842e-06 | 2.3842e-06 |   0.0 |  0.00
+Output  | 0.00013995 | 0.00013995 | 0.00013995 |   0.0 |  0.28
+Modify  | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Other   |            | 6.914e-06  |            |       |  0.01
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*2
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.8 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8000000 2.8000000 2.8000000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6000000 5.6000000 1.4000000) with tilt (0.0000000 1.4000000 1.4000000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.627          5.6          5.6          1.4    125783.76    125783.76            0            0            0            0     83855.84 
+     100    -13843.12          5.6          5.6          1.4    11.046261    11.046261            0            0            0            0    7.3641742 
+     104    -13843.12          5.6          5.6          1.4    10.423224    10.423224            0            0            0            0    6.9488158 
+Loop time of 5.84869 on 1 procs for 104 steps with 4 atoms
+
+630.7% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+      -13842.627175651  -13843.1203137486  -13843.1203137623
+  Force two-norm initial, final = 1.7409058 0.00011598192
+  Force max component initial, final = 0.61550315 4.1005802e-05
+  Final line search alpha, max atom move = 1.0000000 4.1005802e-05
+  Iterations, force evaluations = 104 104
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 5.8109     | 5.8109     | 5.8109     |   0.0 | 99.35
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00049233 | 0.00049233 | 0.00049233 |   0.0 |  0.01
+Output  | 0.036077   | 0.036077   | 0.036077   |   0.0 |  0.62
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001203   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137623
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.8*${latparam}*${latparam}/2)
+variable        V equal (2.8*2.8*${latparam}/2)
+variable        V equal (2.8*2.8*2.8/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+10.976 -13843.1203137623
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     104    -13840.11          5.6          5.6          1.4    386947.84    386947.84            0            0            0            0    257965.23 
+     105    -13840.11          5.6          5.6          1.4    386947.84    386947.84            0            0            0            0    257965.23 
+Loop time of 0.0449951 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.920 ns/day, 12.499 hours/ns, 22.225 timesteps/s
+629.5% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.044788   | 0.044788   | 0.044788   |   0.0 | 99.54
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 3.8147e-06 | 3.8147e-06 | 3.8147e-06 |   0.0 |  0.01
+Output  | 0.00019312 | 0.00019312 | 0.00019312 |   0.0 |  0.43
+Modify  | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Other   |            | 8.106e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*3
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.805 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8050000 2.8050000 2.8050000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6100000 5.6100000 1.4025000) with tilt (0.0000000 1.4025000 1.4025000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.0125, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.639         5.61         5.61       1.4025    115621.72    115621.72            0            0            0            0    77081.148 
+     100    -13843.12         5.61         5.61       1.4025    11.169555    11.169555            0            0            0            0      7.44637 
+     105    -13843.12         5.61         5.61       1.4025    10.383196    10.383196            0            0            0            0    6.9221303 
+Loop time of 6.11498 on 1 procs for 105 steps with 4 atoms
+
+636.3% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.6390000668  -13843.1203137471  -13843.1203137609
+  Force two-norm initial, final = 1.6059788 0.00011615686
+  Force max component initial, final = 0.56779924 4.1067652e-05
+  Final line search alpha, max atom move = 1.0000000 4.1067652e-05
+  Iterations, force evaluations = 105 106
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.0735     | 6.0735     | 6.0735     |   0.0 | 99.32
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00040841 | 0.00040841 | 0.00040841 |   0.0 |  0.01
+Output  | 0.039761   | 0.039761   | 0.039761   |   0.0 |  0.65
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001279   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137609
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.805*${latparam}*${latparam}/2)
+variable        V equal (2.805*2.805*${latparam}/2)
+variable        V equal (2.805*2.805*2.805/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     105   -13840.209         5.61         5.61       1.4025    378354.38    378354.38            0            0            0            0    252236.26 
+11.0349050625 -13843.1203137609
+     106   -13840.209         5.61         5.61       1.4025    378354.38    378354.38            0            0            0            0    252236.26 
+Loop time of 0.046355 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.864 ns/day, 12.876 hours/ns, 21.573 timesteps/s
+639.8% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.046147   | 0.046147   | 0.046147   |   0.0 | 99.55
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.861e-06  | 2.861e-06  | 2.861e-06  |   0.0 |  0.01
+Output  | 0.00015497 | 0.00015497 | 0.00015497 |   0.0 |  0.33
+Modify  | 4.22e-05   | 4.22e-05   | 4.22e-05   |   0.0 |  0.09
+Other   |            | 7.868e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*4
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.81 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8100000 2.8100000 2.8100000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6200000 5.6200000 1.4050000) with tilt (0.0000000 1.4050000 1.4050000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.025, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0    -13842.65         5.62         5.62        1.405    106528.89    106528.89            0            0            0            0    71019.263 
+     100    -13843.12         5.62         5.62        1.405    11.122153    11.122153            0            0            0            0    7.4147686 
+     105    -13843.12         5.62         5.62        1.405    10.338595    10.338595            0            0            0            0    6.8923964 
+Loop time of 6.66253 on 1 procs for 105 steps with 4 atoms
+
+637.5% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.6499203932  -13843.1203137461  -13843.1203137599
+  Force two-norm initial, final = 1.4849598 0.00011627771
+  Force max component initial, final = 0.52501257 4.1110377e-05
+  Final line search alpha, max atom move = 1.0000000 4.1110377e-05
+  Iterations, force evaluations = 105 106
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.6235     | 6.6235     | 6.6235     |   0.0 | 99.41
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00051236 | 0.00051236 | 0.00051236 |   0.0 |  0.01
+Output  | 0.036844   | 0.036844   | 0.036844   |   0.0 |  0.55
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001659   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137599
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.81*${latparam}*${latparam}/2)
+variable        V equal (2.81*2.81*${latparam}/2)
+variable        V equal (2.81*2.81*2.81/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     105   -13840.306         5.62         5.62        1.405    367618.41    367618.41            0 -6.4134485e-11            0            0    245078.94 
+11.0940205 -13843.1203137599
+     106   -13840.306         5.62         5.62        1.405    367618.41    367618.41            0 -6.4134485e-11            0            0    245078.94 
+Loop time of 0.0439608 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.965 ns/day, 12.211 hours/ns, 22.748 timesteps/s
+621.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.043285   | 0.043285   | 0.043285   |   0.0 | 98.46
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Output  | 0.00059795 | 0.00059795 | 0.00059795 |   0.0 |  1.36
+Modify  | 6.6996e-05 | 6.6996e-05 | 6.6996e-05 |   0.0 |  0.15
+Other   |            | 8.821e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*5
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.815 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8150000 2.8150000 2.8150000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6300000 5.6300000 1.4075000) with tilt (0.0000000 1.4075000 1.4075000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.0375, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0    -13842.66         5.63         5.63       1.4075     98399.71     98399.71            0            0            0            0    65599.807 
+     100    -13843.12         5.63         5.63       1.4075    11.072227    11.072227            0            0            0            0    7.3814846 
+     105    -13843.12         5.63         5.63       1.4075    10.291777    10.291777            0            0            0            0    6.8611848 
+Loop time of 6.73641 on 1 procs for 105 steps with 4 atoms
+
+633.3% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.6600302273  -13843.1203137453  -13843.1203137591
+  Force two-norm initial, final = 1.3765286 0.0001163703
+  Force max component initial, final = 0.48667637 4.1143113e-05
+  Final line search alpha, max atom move = 1.0000000 4.1143113e-05
+  Iterations, force evaluations = 105 106
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.6938     | 6.6938     | 6.6938     |   0.0 | 99.37
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00044036 | 0.00044036 | 0.00044036 |   0.0 |  0.01
+Output  | 0.040785   | 0.040785   | 0.040785   |   0.0 |  0.61
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001359   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137591
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.815*${latparam}*${latparam}/2)
+variable        V equal (2.815*2.815*${latparam}/2)
+variable        V equal (2.815*2.815*2.815/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     105   -13840.399         5.63         5.63       1.4075    355455.65    355455.65            0 -6.3793345e-11            0            0    236970.44 
+11.1533466875 -13843.1203137591
+     106   -13840.399         5.63         5.63       1.4075    355455.65    355455.65            0 -6.3793345e-11            0            0    236970.44 
+Loop time of 0.0541 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.597 ns/day, 15.028 hours/ns, 18.484 timesteps/s
+636.3% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.053677   | 0.053677   | 0.053677   |   0.0 | 99.22
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.1458e-06 | 2.1458e-06 | 2.1458e-06 |   0.0 |  0.00
+Output  | 0.00037193 | 0.00037193 | 0.00037193 |   0.0 |  0.69
+Modify  | 4.1008e-05 | 4.1008e-05 | 4.1008e-05 |   0.0 |  0.08
+Other   |            | 8.106e-06  |            |       |  0.01
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*6
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.82 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8200000 2.8200000 2.8200000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6400000 5.6400000 1.4100000) with tilt (0.0000000 1.4100000 1.4100000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.05, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.669         5.64         5.64         1.41    91140.776    91140.776            0            0            0            0    60760.517 
+     100    -13843.12         5.64         5.64         1.41    11.020151    11.020151            0            0            0            0    7.3467672 
+     106    -13843.12         5.64         5.64         1.41    10.098589    10.098589            0            0            0            0    6.7323929 
+Loop time of 6.29788 on 1 procs for 106 steps with 4 atoms
+
+632.1% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.6694143478  -13843.1203137586   -13843.120313772
+  Force two-norm initial, final = 1.2795156 0.00011479283
+  Force max component initial, final = 0.45237707 4.0585394e-05
+  Final line search alpha, max atom move = 1.0000000 4.0585394e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.2535     | 6.2535     | 6.2535     |   0.0 | 99.30
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00040627 | 0.00040627 | 0.00040627 |   0.0 |  0.01
+Output  | 0.042842   | 0.042842   | 0.042842   |   0.0 |  0.68
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001106   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.120313772
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.82*${latparam}*${latparam}/2)
+variable        V equal (2.82*2.82*${latparam}/2)
+variable        V equal (2.82*2.82*2.82/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.212884 -13843.120313772
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106   -13840.489         5.64         5.64         1.41    342529.74    342529.74            0 3.172731e-11            0            0    228353.16 
+     107   -13840.489         5.64         5.64         1.41    342529.74    342529.74            0 3.172731e-11            0            0    228353.16 
+Loop time of 0.090152 on 1 procs for 1 steps with 4 atoms
+
+Performance: 0.958 ns/day, 25.042 hours/ns, 11.092 timesteps/s
+660.3% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.089667   | 0.089667   | 0.089667   |   0.0 | 99.46
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 9.5367e-07 | 9.5367e-07 | 9.5367e-07 |   0.0 |  0.00
+Output  | 0.00047302 | 0.00047302 | 0.00047302 |   0.0 |  0.52
+Modify  | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Other   |            | 9.06e-06   |            |       |  0.01
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*7
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.825 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8250000 2.8250000 2.8250000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6500000 5.6500000 1.4125000) with tilt (0.0000000 1.4125000 1.4125000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.0625, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.678         5.65         5.65       1.4125    84671.437    84671.437            0            0            0            0    56447.625 
+     100    -13843.12         5.65         5.65       1.4125    10.966205    10.966205            0            0            0            0    7.3108035 
+     106    -13843.12         5.65         5.65       1.4125    10.048923    10.048923            0            0            0            0    6.6992822 
+Loop time of 6.4155 on 1 procs for 106 steps with 4 atoms
+
+631.8% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.6781498338  -13843.1203137582  -13843.1203137717
+  Force two-norm initial, final = 1.1929122 0.00011483701
+  Force max component initial, final = 0.42175815 4.0601015e-05
+  Final line search alpha, max atom move = 1.0000000 4.0601015e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.369      | 6.369      | 6.369      |   0.0 | 99.28
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00057077 | 0.00057077 | 0.00057077 |   0.0 |  0.01
+Output  | 0.044165   | 0.044165   | 0.044165   |   0.0 |  0.69
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001743   |            |       |  0.03
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137717
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.825*${latparam}*${latparam}/2)
+variable        V equal (2.825*2.825*${latparam}/2)
+variable        V equal (2.825*2.825*2.825/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.2726328125 -13843.1203137717
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106   -13840.576         5.65         5.65       1.4125    328784.86    328784.86            0 6.3118289e-11            0            0     219189.9 
+     107   -13840.576         5.65         5.65       1.4125    328784.86    328784.86            0 6.3118289e-11            0            0     219189.9 
+Loop time of 0.316173 on 1 procs for 1 steps with 4 atoms
+
+Performance: 0.273 ns/day, 87.826 hours/ns, 3.163 timesteps/s
+668.5% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.31593    | 0.31593    | 0.31593    |   0.0 | 99.92
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Output  | 0.00023389 | 0.00023389 | 0.00023389 |   0.0 |  0.07
+Modify  | 9.5367e-07 | 9.5367e-07 | 9.5367e-07 |   0.0 |  0.00
+Other   |            | 9.298e-06  |            |       |  0.00
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*8
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.83 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8300000 2.8300000 2.8300000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6600000 5.6600000 1.4150000) with tilt (0.0000000 1.4150000 1.4150000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.075, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.686         5.66         5.66        1.415    78922.843    78922.843            0            0            0            0    52615.228 
+     100    -13843.12         5.66         5.66        1.415    10.910595    10.910595            0            0            0            0    7.2737299 
+     106    -13843.12         5.66         5.66        1.415    9.9978393    9.9978393            0            0            0            0    6.6652262 
+Loop time of 6.94841 on 1 procs for 106 steps with 4 atoms
+
+626.0% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+      -13842.686307179   -13843.120313758  -13843.1203137715
+  Force two-norm initial, final = 1.1158613 0.000114861
+  Force max component initial, final = 0.39451656 4.0609497e-05
+  Final line search alpha, max atom move = 1.0000000 4.0609497e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.8967     | 6.8967     | 6.8967     |   0.0 | 99.26
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00056648 | 0.00056648 | 0.00056648 |   0.0 |  0.01
+Output  | 0.049817   | 0.049817   | 0.049817   |   0.0 |  0.72
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001314   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137715
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.83*${latparam}*${latparam}/2)
+variable        V equal (2.83*2.83*${latparam}/2)
+variable        V equal (2.83*2.83*2.83/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.3325935 -13843.1203137715
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106    -13840.66         5.66         5.66        1.415    313949.17    313949.17            0            0            0            0    209299.45 
+     107    -13840.66         5.66         5.66        1.415    313949.17    313949.17            0            0            0            0    209299.45 
+Loop time of 0.0516939 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.671 ns/day, 14.359 hours/ns, 19.345 timesteps/s
+635.3% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.051218   | 0.051218   | 0.051218   |   0.0 | 99.08
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 9.5367e-07 | 9.5367e-07 | 9.5367e-07 |   0.0 |  0.00
+Output  | 0.00046611 | 0.00046611 | 0.00046611 |   0.0 |  0.90
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 8.821e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*9
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.835 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8350000 2.8350000 2.8350000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6700000 5.6700000 1.4175000) with tilt (0.0000000 1.4175000 1.4175000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.0875, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.694         5.67         5.67       1.4175    73836.156    73836.156            0            0            0            0    49224.104 
+     100    -13843.12         5.67         5.67       1.4175     10.85346     10.85346            0            0            0            0    7.2356399 
+     106    -13843.12         5.67         5.67       1.4175    9.9454586    9.9454586            0            0            0            0    6.6303057 
+Loop time of 6.27986 on 1 procs for 106 steps with 4 atoms
+
+627.0% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.6939512868   -13843.120313758  -13843.1203137714
+  Force two-norm initial, final = 1.0476346 0.00011486592
+  Force max component initial, final = 0.37039477 4.0611235e-05
+  Final line search alpha, max atom move = 1.0000000 4.0611235e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.2261     | 6.2261     | 6.2261     |   0.0 | 99.14
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00040817 | 0.00040817 | 0.00040817 |   0.0 |  0.01
+Output  | 0.051706   | 0.051706   | 0.051706   |   0.0 |  0.82
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001661   |            |       |  0.03
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137714
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.835*${latparam}*${latparam}/2)
+variable        V equal (2.835*2.835*${latparam}/2)
+variable        V equal (2.835*2.835*2.835/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.3927664375 -13843.1203137714
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106   -13840.739         5.67         5.67       1.4175    297393.72    297393.72            0 1.2490545e-10            0            0    198262.48 
+     107   -13840.739         5.67         5.67       1.4175    297393.72    297393.72            0 1.2490545e-10            0            0    198262.48 
+Loop time of 0.0495 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.745 ns/day, 13.750 hours/ns, 20.202 timesteps/s
+628.5% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.049229   | 0.049229   | 0.049229   |   0.0 | 99.45
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.1458e-06 | 2.1458e-06 | 2.1458e-06 |   0.0 |  0.00
+Output  | 0.00025892 | 0.00025892 | 0.00025892 |   0.0 |  0.52
+Modify  | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Other   |            | 8.106e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*10
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.84 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8400000 2.8400000 2.8400000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6800000 5.6800000 1.4200000) with tilt (0.0000000 1.4200000 1.4200000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.1, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.701         5.68         5.68         1.42    69360.437    69360.437            0            0            0            0    46240.291 
+     100    -13843.12         5.68         5.68         1.42    10.794886    10.794886            0            0            0            0    7.1965904 
+     106    -13843.12         5.68         5.68         1.42    9.8918547    9.8918547            0            0            0            0    6.5945698 
+Loop time of 6.01683 on 1 procs for 106 steps with 4 atoms
+
+629.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7011422841  -13843.1203137581  -13843.1203137716
+  Force two-norm initial, final = 0.98760467 0.00011485234
+  Force max component initial, final = 0.34917098 4.0606434e-05
+  Final line search alpha, max atom move = 1.0000000 4.0606434e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 5.971      | 5.971      | 5.971      |   0.0 | 99.24
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00045395 | 0.00045395 | 0.00045395 |   0.0 |  0.01
+Output  | 0.044074   | 0.044074   | 0.044074   |   0.0 |  0.73
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001283   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137716
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.84*${latparam}*${latparam}/2)
+variable        V equal (2.84*2.84*${latparam}/2)
+variable        V equal (2.84*2.84*2.84/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.453152 -13843.1203137716
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106   -13840.814         5.68         5.68         1.42    278535.39    278535.39            0 -1.242469e-10            0            0    185690.26 
+     107   -13840.814         5.68         5.68         1.42    278535.39    278535.39            0 -1.242469e-10            0            0    185690.26 
+Loop time of 0.0477931 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.808 ns/day, 13.276 hours/ns, 20.924 timesteps/s
+638.5% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.047532   | 0.047532   | 0.047532   |   0.0 | 99.45
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.1921e-06 | 1.1921e-06 | 1.1921e-06 |   0.0 |  0.00
+Output  | 0.00024796 | 0.00024796 | 0.00024796 |   0.0 |  0.52
+Modify  | 2.1458e-06 | 2.1458e-06 | 2.1458e-06 |   0.0 |  0.00
+Other   |            | 1.001e-05  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*11
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.845 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8450000 2.8450000 2.8450000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.6900000 5.6900000 1.4225000) with tilt (0.0000000 1.4225000 1.4225000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.1125, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.708         5.69         5.69       1.4225    65450.528    65450.528            0            0            0            0    43633.685 
+     100    -13843.12         5.69         5.69       1.4225    10.736681    10.736681            0            0            0            0    7.1577876 
+     106    -13843.12         5.69         5.69       1.4225    9.8385916    9.8385916            0            0            0            0    6.5590611 
+Loop time of 7.18892 on 1 procs for 106 steps with 4 atoms
+
+632.7% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7079361351  -13843.1203137582  -13843.1203137717
+  Force two-norm initial, final = 0.93521687 0.0001148383
+  Force max component initial, final = 0.33064909 4.0601470e-05
+  Final line search alpha, max atom move = 1.0000000 4.0601470e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 7.1404     | 7.1404     | 7.1404     |   0.0 | 99.32
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00050139 | 0.00050139 | 0.00050139 |   0.0 |  0.01
+Output  | 0.046528   | 0.046528   | 0.046528   |   0.0 |  0.65
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001526   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137717
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.845*${latparam}*${latparam}/2)
+variable        V equal (2.845*2.845*${latparam}/2)
+variable        V equal (2.845*2.845*2.845/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.5137505625 -13843.1203137717
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106   -13840.884         5.69         5.69       1.4225    257004.86    257004.86            0 3.0898242e-11            0            0    171336.57 
+     107   -13840.884         5.69         5.69       1.4225    257004.86    257004.86            0 3.0898242e-11            0            0    171336.57 
+Loop time of 0.0568819 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.519 ns/day, 15.801 hours/ns, 17.580 timesteps/s
+636.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.056518   | 0.056518   | 0.056518   |   0.0 | 99.36
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 9.5367e-07 | 9.5367e-07 | 9.5367e-07 |   0.0 |  0.00
+Output  | 0.00031304 | 0.00031304 | 0.00031304 |   0.0 |  0.55
+Modify  | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Other   |            | 4.792e-05  |            |       |  0.08
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*12
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.85 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8500000 2.8500000 2.8500000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.7000000 5.7000000 1.4250000) with tilt (0.0000000 1.4250000 1.4250000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.125, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.714          5.7          5.7        1.425    62065.181    62065.181            0            0            0            0    41376.787 
+     100    -13843.12          5.7          5.7        1.425    10.680339    10.680339            0            0            0            0    7.1202262 
+     106    -13843.12          5.7          5.7        1.425    9.7869589    9.7869589            0            0            0            0    6.5246393 
+Loop time of 6.33901 on 1 procs for 106 steps with 4 atoms
+
+627.4% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7143850628  -13843.1203137582  -13843.1203137717
+  Force two-norm initial, final = 0.88996388 0.00011483899
+  Force max component initial, final = 0.31464975 4.0601713e-05
+  Final line search alpha, max atom move = 1.0000000 4.0601713e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.2812     | 6.2812     | 6.2812     |   0.0 | 99.09
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00041747 | 0.00041747 | 0.00041747 |   0.0 |  0.01
+Output  | 0.055829   | 0.055829   | 0.055829   |   0.0 |  0.88
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001599   |            |       |  0.03
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137717
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.85*${latparam}*${latparam}/2)
+variable        V equal (2.85*2.85*${latparam}/2)
+variable        V equal (2.85*2.85*2.85/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.5745625 -13843.1203137717
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106   -13840.948          5.7          5.7        1.425    232515.05    232515.05            0            0            0            0    155010.04 
+     107   -13840.948          5.7          5.7        1.425    232515.05    232515.05            0            0            0            0    155010.04 
+Loop time of 0.047646 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.813 ns/day, 13.235 hours/ns, 20.988 timesteps/s
+622.6% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.047095   | 0.047095   | 0.047095   |   0.0 | 98.84
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Output  | 0.00054097 | 0.00054097 | 0.00054097 |   0.0 |  1.14
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 8.106e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*13
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.855 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8550000 2.8550000 2.8550000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.7100000 5.7100000 1.4275000) with tilt (0.0000000 1.4275000 1.4275000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.1375, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.721         5.71         5.71       1.4275    59165.546    59165.546            0            0            0            0    39443.697 
+     100    -13843.12         5.71         5.71       1.4275    10.624299    10.624299            0            0            0            0    7.0828658 
+     106    -13843.12         5.71         5.71       1.4275    9.7356072    9.7356072            0            0            0            0    6.4904048 
+Loop time of 6.40996 on 1 procs for 106 steps with 4 atoms
+
+624.7% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7205378077  -13843.1203137582  -13843.1203137717
+  Force two-norm initial, final = 0.85136489 0.00011483873
+  Force max component initial, final = 0.30100294 4.0601623e-05
+  Final line search alpha, max atom move = 1.0000000 4.0601623e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.3513     | 6.3513     | 6.3513     |   0.0 | 99.09
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00053048 | 0.00053048 | 0.00053048 |   0.0 |  0.01
+Output  | 0.056949   | 0.056949   | 0.056949   |   0.0 |  0.89
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001144   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137717
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.855*${latparam}*${latparam}/2)
+variable        V equal (2.855*2.855*${latparam}/2)
+variable        V equal (2.855*2.855*2.855/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.6355881875 -13843.1203137717
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106   -13841.005         5.71         5.71       1.4275    204585.15    204585.15            0            0            0            0     136390.1 
+     107   -13841.005         5.71         5.71       1.4275    204585.15    204585.15            0            0            0            0     136390.1 
+Loop time of 0.048558 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.779 ns/day, 13.488 hours/ns, 20.594 timesteps/s
+626.0% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.04776    | 0.04776    | 0.04776    |   0.0 | 98.36
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.1458e-06 | 2.1458e-06 | 2.1458e-06 |   0.0 |  0.00
+Output  | 0.00078511 | 0.00078511 | 0.00078511 |   0.0 |  1.62
+Modify  | 9.5367e-07 | 9.5367e-07 | 9.5367e-07 |   0.0 |  0.00
+Other   |            | 9.775e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*14
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.86 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8600000 2.8600000 2.8600000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.7200000 5.7200000 1.4300000) with tilt (0.0000000 1.4300000 1.4300000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.15, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.726         5.72         5.72         1.43    56714.079    56714.079            0            0            0            0    37809.386 
+     100    -13843.12         5.72         5.72         1.43    10.568554    10.568554            0            0            0            0    7.0457024 
+     106    -13843.12         5.72         5.72         1.43    9.6845313    9.6845313            0            0            0            0    6.4563542 
+Loop time of 7.0112 on 1 procs for 106 steps with 4 atoms
+
+629.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7264397574  -13843.1203137582  -13843.1203137717
+  Force two-norm initial, final = 0.81895037 0.00011483749
+  Force max component initial, final = 0.28954268 4.0601186e-05
+  Final line search alpha, max atom move = 1.0000000 4.0601186e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.9581     | 6.9581     | 6.9581     |   0.0 | 99.24
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00047374 | 0.00047374 | 0.00047374 |   0.0 |  0.01
+Output  | 0.051      | 0.051      | 0.051      |   0.0 |  0.73
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001634   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137717
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.86*${latparam}*${latparam}/2)
+variable        V equal (2.86*2.86*${latparam}/2)
+variable        V equal (2.86*2.86*2.86/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.696828 -13843.1203137717
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106   -13841.054         5.72         5.72         1.43    172484.41    172484.41            0 2.1290238e-10            0            0    114989.61 
+     107   -13841.054         5.72         5.72         1.43    172484.41    172484.41            0 2.1290238e-10            0            0    114989.61 
+Loop time of 0.051645 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.673 ns/day, 14.346 hours/ns, 19.363 timesteps/s
+630.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.051193   | 0.051193   | 0.051193   |   0.0 | 99.12
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Output  | 0.00043797 | 0.00043797 | 0.00043797 |   0.0 |  0.85
+Modify  | 9.5367e-07 | 9.5367e-07 | 9.5367e-07 |   0.0 |  0.00
+Other   |            | 1.121e-05  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*15
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.865 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8650000 2.8650000 2.8650000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.7300000 5.7300000 1.4325000) with tilt (0.0000000 1.4325000 1.4325000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.1625, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.732         5.73         5.73       1.4325    54673.847    54673.847            0            0            0            0    36449.232 
+     100    -13843.12         5.73         5.73       1.4325    10.513094    10.513094            0            0            0            0    7.0087293 
+     106    -13843.12         5.73         5.73       1.4325    9.6337222    9.6337222            0            0            0            0    6.4224815 
+Loop time of 6.88309 on 1 procs for 106 steps with 4 atoms
+
+632.4% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7321329891  -13843.1203137582  -13843.1203137717
+  Force two-norm initial, final = 0.79225233 0.00011483519
+  Force max component initial, final = 0.2801035 4.0600370e-05
+  Final line search alpha, max atom move = 1.0000000 4.0600370e-05
+  Iterations, force evaluations = 106 107
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.8242     | 6.8242     | 6.8242     |   0.0 | 99.14
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00036716 | 0.00036716 | 0.00036716 |   0.0 |  0.01
+Output  | 0.057067   | 0.057067   | 0.057067   |   0.0 |  0.83
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001429   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137717
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.865*${latparam}*${latparam}/2)
+variable        V equal (2.865*2.865*${latparam}/2)
+variable        V equal (2.865*2.865*2.865/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.7582823125 -13843.1203137717
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     106   -13841.095         5.73         5.73       1.4325    135538.28    135538.28            0 -1.5127832e-11            0            0    90358.854 
+     107   -13841.095         5.73         5.73       1.4325    135538.28    135538.28            0 -1.5127832e-11            0            0    90358.854 
+Loop time of 0.053436 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.617 ns/day, 14.843 hours/ns, 18.714 timesteps/s
+637.3% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.052711   | 0.052711   | 0.052711   |   0.0 | 98.64
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Output  | 0.00071311 | 0.00071311 | 0.00071311 |   0.0 |  1.33
+Modify  | 9.5367e-07 | 9.5367e-07 | 9.5367e-07 |   0.0 |  0.00
+Other   |            | 9.06e-06   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*16
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.87 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8700000 2.8700000 2.8700000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.7400000 5.7400000 1.4350000) with tilt (0.0000000 1.4350000 1.4350000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.175, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.738         5.74         5.74        1.435    53008.199    53008.199            0            0            0            0    35338.799 
+     100    -13843.12         5.74         5.74        1.435    10.067609    10.067609            0            0            0            0    6.7117393 
+     103    -13843.12         5.74         5.74        1.435    9.6417883    9.6417883            0            0            0            0    6.4278588 
+Loop time of 6.30464 on 1 procs for 103 steps with 4 atoms
+
+628.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7376562609  -13843.1203137523   -13843.120313766
+  Force two-norm initial, final = 0.77079959 0.00011553529
+  Force max component initial, final = 0.27251881 4.0847893e-05
+  Final line search alpha, max atom move = 1.0000000 4.0847893e-05
+  Iterations, force evaluations = 103 103
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.2561     | 6.2561     | 6.2561     |   0.0 | 99.23
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00047278 | 0.00047278 | 0.00047278 |   0.0 |  0.01
+Output  | 0.046636   | 0.046636   | 0.046636   |   0.0 |  0.74
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001447   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.120313766
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.87*${latparam}*${latparam}/2)
+variable        V equal (2.87*2.87*${latparam}/2)
+variable        V equal (2.87*2.87*2.87/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     103   -13841.125         5.74         5.74        1.435    93485.954    93485.954            0 -1.5048905e-11            0            0    62323.969 
+11.8199515 -13843.120313766
+     104   -13841.125         5.74         5.74        1.435    93485.954    93485.954            0 -1.5048905e-11            0            0    62323.969 
+Loop time of 0.0786941 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.098 ns/day, 21.859 hours/ns, 12.707 timesteps/s
+625.8% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.077992   | 0.077992   | 0.077992   |   0.0 | 99.11
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Output  | 0.00040007 | 0.00040007 | 0.00040007 |   0.0 |  0.51
+Modify  | 0.00029087 | 0.00029087 | 0.00029087 |   0.0 |  0.37
+Other   |            | 9.06e-06   |            |       |  0.01
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*17
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.875 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8750000 2.8750000 2.8750000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.7500000 5.7500000 1.4375000) with tilt (0.0000000 1.4375000 1.4375000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.1875, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.743         5.75         5.75       1.4375    51680.705    51680.705            0            0            0            0    34453.803 
+     100    -13843.12         5.75         5.75       1.4375    10.066022    10.066022            0            0            0            0    6.7106816 
+     103    -13843.12         5.75         5.75       1.4375    9.6388787    9.6388787            0            0            0            0    6.4259191 
+Loop time of 6.6573 on 1 procs for 103 steps with 4 atoms
+
+625.4% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7430449851  -13843.1203137475  -13843.1203137613
+  Force two-norm initial, final = 0.75411705 0.00011610609
+  Force max component initial, final = 0.26662064 4.1049701e-05
+  Final line search alpha, max atom move = 1.0000000 4.1049701e-05
+  Iterations, force evaluations = 103 103
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.5989     | 6.5989     | 6.5989     |   0.0 | 99.12
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00043726 | 0.00043726 | 0.00043726 |   0.0 |  0.01
+Output  | 0.0565     | 0.0565     | 0.0565     |   0.0 |  0.85
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.001476   |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137613
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.875*${latparam}*${latparam}/2)
+variable        V equal (2.875*2.875*${latparam}/2)
+variable        V equal (2.875*2.875*2.875/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     103   -13841.143         5.75         5.75       1.4375    48267.869    48267.869            0 -8.9823151e-11            0            0    32178.579 
+11.8818359375 -13843.1203137613
+     104   -13841.143         5.75         5.75       1.4375    48267.869    48267.869            0 -8.9823151e-11            0            0    32178.579 
+Loop time of 0.0505579 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.709 ns/day, 14.044 hours/ns, 19.779 timesteps/s
+610.3% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.050134   | 0.050134   | 0.050134   |   0.0 | 99.16
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.861e-06  | 2.861e-06  | 2.861e-06  |   0.0 |  0.01
+Output  | 0.00034213 | 0.00034213 | 0.00034213 |   0.0 |  0.68
+Modify  | 7.081e-05  | 7.081e-05  | 7.081e-05  |   0.0 |  0.14
+Other   |            | 7.868e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*18
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.88 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8800000 2.8800000 2.8800000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.7600000 5.7600000 1.4400000) with tilt (0.0000000 1.4400000 1.4400000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.2, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.748         5.76         5.76         1.44    50655.305    50655.305            0            0            0            0    33770.203 
+     100    -13843.12         5.76         5.76         1.44     10.05439     10.05439            0            0            0            0    6.7029267 
+     104    -13843.12         5.76         5.76         1.44    9.4907371    9.4907371            0            0            0            0    6.3271581 
+Loop time of 6.10668 on 1 procs for 104 steps with 4 atoms
+
+621.4% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7483312057  -13843.1203137575   -13843.120313771
+  Force two-norm initial, final = 0.74172778 0.00011491717
+  Force max component initial, final = 0.26224037 4.0629354e-05
+  Final line search alpha, max atom move = 1.0000000 4.0629354e-05
+  Iterations, force evaluations = 104 104
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.0605     | 6.0605     | 6.0605     |   0.0 | 99.24
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00035357 | 0.00035357 | 0.00035357 |   0.0 |  0.01
+Output  | 0.044887   | 0.044887   | 0.044887   |   0.0 |  0.74
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.0009689  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.120313771
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.88*${latparam}*${latparam}/2)
+variable        V equal (2.88*2.88*${latparam}/2)
+variable        V equal (2.88*2.88*2.88/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+11.943936 -13843.120313771
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     104    -13841.15         5.76         5.76         1.44    5299.8059    5299.8059            0 2.3130208e-10            0            0     3533.204 
+     105    -13841.15         5.76         5.76         1.44    5299.8059    5299.8059            0 2.3130208e-10            0            0     3533.204 
+Loop time of 0.0496588 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.740 ns/day, 13.794 hours/ns, 20.137 timesteps/s
+635.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.049401   | 0.049401   | 0.049401   |   0.0 | 99.48
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.861e-06  | 2.861e-06  | 2.861e-06  |   0.0 |  0.01
+Output  | 0.00024414 | 0.00024414 | 0.00024414 |   0.0 |  0.49
+Modify  | 9.5367e-07 | 9.5367e-07 | 9.5367e-07 |   0.0 |  0.00
+Other   |            | 9.775e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*19
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.885 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8850000 2.8850000 2.8850000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.7700000 5.7700000 1.4425000) with tilt (0.0000000 1.4425000 1.4425000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.2125, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.754         5.77         5.77       1.4425    49896.573    49896.573            0            0            0            0    33264.382 
+     100    -13843.12         5.77         5.77       1.4425    10.034945    10.034945            0            0            0            0    6.6899633 
+     104    -13843.12         5.77         5.77       1.4425    9.4712118    9.4712118            0            0            0            0    6.3141412 
+Loop time of 6.93339 on 1 procs for 104 steps with 4 atoms
+
+627.2% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7535435997  -13843.1203137545  -13843.1203137681
+  Force two-norm initial, final = 0.73315701 0.00011527968
+  Force max component initial, final = 0.25921015 4.0757523e-05
+  Final line search alpha, max atom move = 1.0000000 4.0757523e-05
+  Iterations, force evaluations = 104 104
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.8821     | 6.8821     | 6.8821     |   0.0 | 99.26
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00038195 | 0.00038195 | 0.00038195 |   0.0 |  0.01
+Output  | 0.049628   | 0.049628   | 0.049628   |   0.0 |  0.72
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.00127    |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137681
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.885*${latparam}*${latparam}/2)
+variable        V equal (2.885*2.885*${latparam}/2)
+variable        V equal (2.885*2.885*2.885/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+12.0062520625 -13843.1203137681
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     104   -13841.147         5.77         5.77       1.4425   -29902.969   -29902.969            0 1.0370774e-10            0            0   -19935.312 
+     105   -13841.147         5.77         5.77       1.4425   -29902.969   -29902.969            0 1.0370774e-10            0            0   -19935.312 
+Loop time of 0.054507 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.585 ns/day, 15.141 hours/ns, 18.346 timesteps/s
+634.8% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.053538   | 0.053538   | 0.053538   |   0.0 | 98.22
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 1.9073e-06 | 1.9073e-06 | 1.9073e-06 |   0.0 |  0.00
+Output  | 0.00095606 | 0.00095606 | 0.00095606 |   0.0 |  1.75
+Modify  | 9.5367e-07 | 9.5367e-07 | 9.5367e-07 |   0.0 |  0.00
+Other   |            | 1.001e-05  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+clear
+
+units           metal
+dimension       3
+boundary        p p p
+atom_style      atomic
+
+variable        A loop 1 20
+variable        latparam equal 2.79+0.005*${A}
+variable        latparam equal 2.79+0.005*20
+
+#-------Define geometry  (2d X 2d) -------------------------------------------------
+lattice custom ${latparam} a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+lattice custom 2.89 a1 1.0 0.0 0.0 a2 0.0 1.0 0.0 a3 0.0 0.0 1.0                     basis 0.0 0.0 0.0
+Lattice spacing in x,y,z = 2.8900000 2.8900000 2.8900000
+region          box prism 0 2 0 2 0 0.5 0 0.5 0.5 units lattice
+create_box      1 box
+Created triclinic box = (0.0000000 0.0000000 0.0000000) to (5.7800000 5.7800000 1.4450000) with tilt (0.0000000 1.4450000 1.4450000)
+  1 by 1 by 1 MPI processor grid
+create_atoms    1 box
+Created 4 atoms
+  create_atoms CPU = 0.000 seconds
+
+#-------Define interatomic potential------------------------------------
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+pair_style     gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+#pair_coeff	* * /home/lorenzo/Desktop/atomico/testing/schnet.pt 1 26
+
+neighbor        2.0 bin
+neigh_modify    delay 10 check yes page 100000
+
+#-------Define atom mass (no needed for moelcular statics) -------
+mass            1 55.845
+#-------Compute-------
+dump            1000 all custom 1 dump.* id type x y z fx fy fz
+#----- Initial relaxation ------------
+thermo          100
+thermo_style    custom step pe lx ly lz pxx pyy pzz pxy pxz pyz press
+
+min_style       cg
+minimize        1e-12 10e-6 100000000 1000000000
+WARNING: Using 'neigh_modify every 1 delay 0 check yes' setting during minimization (../min.cpp:187)
+Neighbor list info ...
+  update every 1 steps, delay 0 steps, check yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0
+  ghost atom cutoff = 0
+  binsize = 7.225, bins = 1 1 1
+  0 neighbor lists, perpetual/occasional/extra = 0 0 0
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: No pairwise cutoff or binsize set. Atom sorting therefore disabled. (../atom.cpp:2115)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+Per MPI rank memory allocation (min/avg/max) = 4.672 | 4.672 | 4.672 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+       0   -13842.759         5.78         5.78        1.445    49370.032    49370.032            0            0            0            0    32913.355 
+     100    -13843.12         5.78         5.78        1.445    10.009348    10.009348            0            0            0            0    6.6728989 
+     104    -13843.12         5.78         5.78        1.445     9.446108     9.446108            0            0            0            0    6.2974053 
+Loop time of 6.40709 on 1 procs for 104 steps with 4 atoms
+
+618.8% CPU use with 1 MPI tasks x no OpenMP threads
+
+Minimization stats:
+  Stopping criterion = energy tolerance
+  Energy initial, next-to-last, final = 
+     -13842.7587075083   -13843.120313752  -13843.1203137657
+  Force two-norm initial, final = 0.7279369 0.00011557344
+  Force max component initial, final = 0.25736456 4.0861382e-05
+  Final line search alpha, max atom move = 1.0000000 4.0861382e-05
+  Iterations, force evaluations = 104 104
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 6.3537     | 6.3537     | 6.3537     |   0.0 | 99.17
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 0.00045013 | 0.00045013 | 0.00045013 |   0.0 |  0.01
+Output  | 0.051707   | 0.051707   | 0.051707   |   0.0 |  0.81
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.00125    |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        14.0000 ave          14 max          14 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+
+#timestep        0.01
+#min_style       fire
+#minimize        1e-18 1e-9 100000000 100000000
+
+variable        tmp equal "pe"
+variable        pe0 equal ${tmp}
+variable        pe0 equal -13843.1203137657
+variable        V equal (${latparam}*${latparam}*${latparam}/2)
+variable        V equal (2.89*${latparam}*${latparam}/2)
+variable        V equal (2.89*2.89*${latparam}/2)
+variable        V equal (2.89*2.89*2.89/2)
+
+fix             extra all print 2 "${V} ${pe0}" append ev_gnn.txt
+run             1
+WARNING: Proc sub-domain size < neighbor skin, could lead to lost atoms (../domain.cpp:963)
+WARNING: Communication cutoff is 0.0. No ghost atoms will be generated. Atoms may get lost. (../comm_brick.cpp:167)
+12.0687845 -13843.1203137657
+Per MPI rank memory allocation (min/avg/max) = 3.547 | 3.547 | 3.547 Mbytes
+Step PotEng Lx Ly Lz Pxx Pyy Pzz Pxy Pxz Pyz Press 
+     104   -13841.136         5.78         5.78        1.445   -54047.913   -54047.913            0 7.369314e-12            0            0   -36031.942 
+     105   -13841.136         5.78         5.78        1.445   -54047.913   -54047.913            0 7.369314e-12            0            0   -36031.942 
+Loop time of 0.0497279 on 1 procs for 1 steps with 4 atoms
+
+Performance: 1.737 ns/day, 13.813 hours/ns, 20.109 timesteps/s
+619.9% CPU use with 1 MPI tasks x no OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.048886   | 0.048886   | 0.048886   |   0.0 | 98.31
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 2.861e-06  | 2.861e-06  | 2.861e-06  |   0.0 |  0.01
+Output  | 0.00082898 | 0.00082898 | 0.00082898 |   0.0 |  1.67
+Modify  | 1.1921e-06 | 1.1921e-06 | 1.1921e-06 |   0.0 |  0.00
+Other   |            | 8.821e-06  |            |       |  0.02
+
+Nlocal:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:        4.00000 ave           4 max           4 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:        0.00000 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0.0000000
+Neighbor list builds = 0
+Dangerous builds = 0
+unfix           extra
+
+next            A
+jump            ev.in loopa
+Total wall time: 0:07:21

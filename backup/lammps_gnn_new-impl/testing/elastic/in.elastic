@@ -1,0 +1,104 @@
+# Compute elastic constant tensor for a crystal
+
+# =======================Initialization
+# Define variables
+variable up equal 0.03
+variable cfac equal 1.0e-4
+variable cunits string GPa
+
+variable etol equal 0.0
+variable ftol equal 1.0e-10
+variable maxiter equal 100
+variable maxeval equal 1000
+variable dmax equal 1.0e-2
+
+units           metal
+boundary        p p p
+
+# Define crystal
+variable latparam equal 2.843877166
+lattice         bcc ${latparam} orient x 0 0 1 orient y 1 0 0 orient z 0 1 0
+region          box block 0 1 0 1 0 1 units lattice
+create_box      1 box
+create_atoms    1 box
+
+mass 1 55.845
+
+# ==========================Potential file
+
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/Fe_2.eam.fs Fe
+
+#pair_style	gnn DimeNet 5.0 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+#pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+
+pair_style	gnn DimeNet 5.0 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449515
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet_nopbc.pt 1 26
+
+# Setup neighbor style
+#neighbor 1.0 nsq
+#neigh_modify once no every 1 delay 0 check yes
+#neighbor        2.0 bin
+#neigh_modify    delay 0 check yes page 100000
+
+thermo          1
+thermo_style custom step temp pe press pxx pyy pzz pxy pxz pyz lx ly lz vol
+run 0
+variable tmp equal pxx
+variable pxx0 equal ${tmp}
+variable tmp equal lx
+variable lx0 equal ${tmp}
+variable tmp equal pe
+variable pe0 equal ${tmp}
+
+# These formulas define the derivatives w.r.t. strain components
+# Constants uses $, variables use v_ 
+variable d1 equal -(v_pxx1-${pxx0})/(v_delta/v_len0)*${cfac}
+
+dump 1 all custom 1 dump x y z fx fy fz
+# ==========================uxx Perturbation
+variable len0 equal ${lx0}
+variable delta equal ${up}*${len0}
+change_box all x delta 0 ${delta} remap units box
+
+min_style cg
+minimize ${etol} ${ftol} ${maxiter} ${maxeval}
+
+
+
+
+variable tmp equal pxx
+variable pxx1 equal ${tmp}
+
+variable C11 equal ${d1}
+
+#-------------------second way to compute C11----------
+# get current potential energy
+variable tmp equal pe
+variable pe1 equal ${tmp}
+
+# get the box size
+variable tmp equal lx
+variable lx1 equal ${tmp}
+variable tmp equal ly
+variable ly1 equal ${tmp}
+variable tmp equal lz
+variable lz1 equal ${tmp}
+
+# get the energy difference
+variable delta_pe equal ${pe1}-${pe0}
+
+# compute the elastic constant by using the definition from total energy
+variable eVAngs3_to_GPa equal 160.21766208
+variable volume_now equal ${lx1}*${ly1}*${lz1}
+variable v1 equal 2*${delta_pe}
+variable v2 equal ${up}*${up}*${volume_now} 
+variable v3 equal ${v1}/${v2}
+variable c11 equal ${v3}*${eVAngs3_to_GPa}
+
+print "Components of the Elastic Constant Tensor"
+print "========================================="
+print "Elastic Constant C11all = ${C11} ${cunits}"
+
+print "C11 computed from the total energy is ${c11} ${cunits}"
+print "========================================="

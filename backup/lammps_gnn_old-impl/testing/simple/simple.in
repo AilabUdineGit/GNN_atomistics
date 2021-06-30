@@ -1,0 +1,43 @@
+atom_style	atomic
+units				metal
+dimension		3
+boundary		p p p
+
+#atom_modify	sort 0 0.0
+#dimension			3
+#lattice 			bcc 	2.4
+#region				box 	block 0 2 0 2 0 2
+#create_box		1 		box
+#create_atoms	1 		box
+#mass					1 		55.845
+
+read_data /home/lorenzo/Desktop/delete_this/testing/simple/db_data
+
+#velocity	all create 300.0 87293 loop geom
+
+#pair_style eam/fs
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe_2.eam.fs Fe
+
+#pair_style	lj/cut 5.0
+#pair_coeff	* * 0.2007 2.4193
+
+#pair_style meam
+#pair_coeff * * /home/lorenzo/Desktop/lammps_gnn_old-impl/models/library.Fe.meam Fe /home/lorenzo/Desktop/lammps_gnn_old-impl/models/Fe.meam Fe
+
+#pair_style	gnn DimeNet 3.5 128 1 7 8 7 6 -3460.825847482401 0.16576383029449013
+#pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet.pt 1 26
+#pair_style	gnn DimeNet 3.5 128 1 3 8 7 6 -3460.825847482401 0.16576383029449013
+#pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/dimenet_f.pt 1 26
+
+pair_style	gnn SchNet 5.0 128 128 3 128 -3460.825847482401 0.16576383029449515
+pair_coeff	* * /home/lorenzo/Desktop/lammps_gnn_new-impl/testing/models/schnet.pt 1 26
+
+#fix 1 all langevin 100 100 1 435235
+#fix	2 all nve
+
+thermo		1
+dump 1 all custom 1 dump x y z fx fy fz
+
+#minimize	1.0e-6 0.001 1000 10000
+
+run 0
