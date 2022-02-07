@@ -1,7 +1,7 @@
 # This repository
 
 This is the Github repository of the paper:
-Lorenzo Cian, Giuseppe Lancioni, Lei Zhang, Mirco Ianese, Nicolas Novelli, Giuseppe Serra, Francesco Maresca, *Atomistic Graph Neural Networks for metals: Application to bcc iron*.  
+Lorenzo Cian, Giuseppe Lancioni, Lei Zhang, Mirco Ianese, Nicolas Novelli, Giuseppe Serra, Francesco Maresca, [*Atomistic Graph Neural Networks for metals: Application to bcc iron*](https://arxiv.org/abs/2109.14012).  
 The repository contains the code and the data necessary to reproduce the results presented in the above paper.  
 All code is available in the IPYNB format to allow for easy execution on cloud computing platforms like Google Colab. 
 
