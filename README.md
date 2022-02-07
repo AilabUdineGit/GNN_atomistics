@@ -5,7 +5,7 @@ Lorenzo Cian, Giuseppe Lancioni, Lei Zhang, Mirco Ianese, Nicolas Novelli, Giuse
 The repository contains the code and the data necessary to reproduce the results presented in the above paper.  
 All code is available in the IPYNB format to allow for easy execution on cloud computing platforms like Google Colab. 
 
-If you use this code, please cite out paper:
+If you use this code, please cite our paper:
 ```
 @misc{cian2021atomistic,
       title={Atomistic Graph Neural Networks for metals: Application to bcc iron}, 
